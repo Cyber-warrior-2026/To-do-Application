@@ -150,5 +150,69 @@ export const AuthController = {
   async logout(req: Request, res: Response) {
     res.clearCookie('auth_token');
     return res.status(200).json({ success: true, message: "Logged out" });
+  },
+
+
+
+// 4. CHANGE PASSWORD
+
+  async changePassword(req: Request, res: Response) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+
+      const userId = req.user?.id; 
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, message: "Please provide current and new password" });
+      }
+
+
+      const user = await UserModel.findById(userId).select('+password');
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+
+      if (!user.password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "You are logged in via Google. You cannot change a password you don't have." 
+        });
+      }
+
+
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: "Incorrect current password" });
+      }
+
+
+
+      user.password = newPassword;
+      await user.save();
+
+      return res.status(200).json({ success: true, message: "Password changed successfully" });
+
+    } catch (error) {
+      console.error("Change Password Error:", error);
+      return res.status(500).json({ success: false, message: "Could not change password" });
+    }
   }
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
