@@ -1,5 +1,6 @@
-import { Response } from 'express';
-import { AuthRequest } from '../../middleware/auth';
+
+// import { AuthRequest } from '../../middleware/auth.middleware';
+import { Request, Response } from 'express';
 import { TodoService } from './todo.service';
 
 const todoService = new TodoService();
@@ -7,9 +8,10 @@ const todoService = new TodoService();
 // @desc    Get all todos for logged-in user
 // @route   GET /api/todos
 // @access  Private
-export const getTodos = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getTodos = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
+    const userId = req.user!.id;
+
     const filter = req.query.filter as 'active' | 'completed' | 'all' | undefined;
     const sortBy = req.query.sortBy as 'createdAt' | 'dueDate' | 'priority' | undefined;
 
@@ -17,25 +19,26 @@ export const getTodos = async (req: AuthRequest, res: Response): Promise<void> =
 
     res.status(200).json({
       success: true,
-      count: todos.length,
-      data: todos
+      data: todos,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch todos',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
 
+
+
 // @desc    Get single todo
 // @route   GET /api/todos/:id
 // @access  Private
-export const getTodo = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getTodo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
-    const todoId = req.params.id;
+    const userId = req.user!.id;
+    const todoId = req.params.id as string;
 
     const todo = await todoService.getTodoById(todoId, userId);
 
@@ -63,9 +66,9 @@ export const getTodo = async (req: AuthRequest, res: Response): Promise<void> =>
 // @desc    Create new todo
 // @route   POST /api/todos
 // @access  Private
-export const createTodo = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createTodo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
+    const userId = req.user!.id;
     const { title, description, priority, dueDate } = req.body;
 
     if (!title || title.trim() === '') {
@@ -98,10 +101,10 @@ export const createTodo = async (req: AuthRequest, res: Response): Promise<void>
 // @desc    Update todo
 // @route   PUT /api/todos/:id
 // @access  Private
-export const updateTodo = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateTodo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
-    const todoId = req.params.id;
+    const userId = req.user!.id;
+    const todoId = req.params.id as string;
 
     const todo = await todoService.updateTodo(todoId, userId, req.body);
 
@@ -130,10 +133,10 @@ export const updateTodo = async (req: AuthRequest, res: Response): Promise<void>
 // @desc    Toggle todo completion
 // @route   PATCH /api/todos/:id/toggle
 // @access  Private
-export const toggleTodo = async (req: AuthRequest, res: Response): Promise<void> => {
+export const toggleTodo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
-    const todoId = req.params.id;
+    const userId = req.user!.id;
+    const todoId = req.params.id as string;
 
     const todo = await todoService.toggleTodo(todoId, userId);
 
@@ -162,10 +165,10 @@ export const toggleTodo = async (req: AuthRequest, res: Response): Promise<void>
 // @desc    Delete todo
 // @route   DELETE /api/todos/:id
 // @access  Private
-export const deleteTodo = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteTodo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
-    const todoId = req.params.id;
+    const userId = req.user!.id;
+    const todoId = req.params.id as string;
 
     const todo = await todoService.deleteTodo(todoId, userId);
 
@@ -194,9 +197,9 @@ export const deleteTodo = async (req: AuthRequest, res: Response): Promise<void>
 // @desc    Get todo statistics
 // @route   GET /api/todos/stats
 // @access  Private
-export const getTodoStats = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getTodoStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId!;
+    const userId = req.user!.id;
     const stats = await todoService.getTodoStats(userId);
 
     res.status(200).json({

@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect } from '../../middleware/auth';
+import { verifyToken } from '../../middleware/auth.middleware';
 import {
   getTodos,
   getTodo,
@@ -13,7 +13,7 @@ import {
 const router = express.Router();
 
 // Apply authentication middleware to all routes
-router.use(protect);
+router.use(verifyToken);
 
 // Stats route (must be before /:id)
 router.get('/stats', getTodoStats);
