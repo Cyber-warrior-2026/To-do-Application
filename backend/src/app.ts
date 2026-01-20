@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { connectDB } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import todoRoutes from './modules/todo/todo.routes';
-
+import authRoutes from './modules/auth/auth.routes';
 dotenv.config();
 
 const app: Application = express();
@@ -34,6 +34,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // Module routes will be added here
 // TODO: Person A - import authRoutes
+app.use('/api/auth', authRoutes);
 // TODO: Person B - import todoRoutes
 app.use('/api/todos', todoRoutes);
 
