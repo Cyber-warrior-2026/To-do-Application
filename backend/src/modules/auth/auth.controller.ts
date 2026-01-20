@@ -15,12 +15,10 @@ export const AuthController = {
         });
       }
 
-
       const user = await AuthService.findOrCreateUser({ sub, email, name, picture });
 
 
-      const token = AuthService.signToken(user.id, user.role);
-
+      const token = AuthService.signToken(user._id.toString(), user.role);
 
       res.cookie('auth_token', token, {
         httpOnly: true,
@@ -28,7 +26,6 @@ export const AuthController = {
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
-
 
       return res.status(200).json({
         success: true,
