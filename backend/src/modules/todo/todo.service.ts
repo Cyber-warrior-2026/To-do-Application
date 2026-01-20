@@ -26,11 +26,17 @@ export class TodoService {
       sortObject.createdAt = -1;
     } else if (sortBy === 'priority') {
       // Custom priority sorting: high -> medium -> low
-      sortObject.priority = 1;
+
       sortObject.createdAt = -1;
     }
 
-    const todos = await Todo.find(query).sort(sortObject);
+    let todos = await Todo.find(query).sort(sortObject);
+      if (sortBy === 'priority') {
+      const priorityOrder = { high: 1, medium: 2, low: 3 };
+      todos = todos.sort((a, b) => {
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+    }
     return todos;
   }
 
