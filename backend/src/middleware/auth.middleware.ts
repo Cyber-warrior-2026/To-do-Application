@@ -26,7 +26,7 @@ export const verifyToken = (
   next: NextFunction
 ) => {
   try {
-    // 1️⃣ Get token from cookies OR Authorization header
+    // Get token from cookies OR Authorization header
     let token: string | undefined = req.cookies?.auth_token;
 
     if (!token && req.headers.authorization) {
@@ -36,7 +36,6 @@ export const verifyToken = (
       }
     }
 
-    // 2️⃣ If no token
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -44,23 +43,18 @@ export const verifyToken = (
       });
     }
 
-    // 3️⃣ JWT Secret
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      console.error("JWT_SECRET not defined");
       return res.status(500).json({
         success: false,
         message: "Server configuration error",
       });
     }
 
-    // 4️⃣ Verify token
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
-    // 5️⃣ Attach user to request
     req.user = decoded;
 
-    // 6️⃣ Continue
     next();
   } catch (error) {
     return res.status(403).json({
