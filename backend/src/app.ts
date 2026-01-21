@@ -16,7 +16,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://to-do-application-six-delta.vercel.app/login',
+  origin: 'process.env.CLIENT_URL',
   credentials: true
 }));
 app.use(express.json());
