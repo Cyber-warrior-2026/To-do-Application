@@ -1,12 +1,12 @@
-import axios from '@/lib/axios';
-import { 
-  Todo, 
-  CreateTodoInput, 
-  UpdateTodoInput, 
-  TodoStats, 
-  TodoFilter, 
-  TodoSort 
-} from '@/types/todo.types';
+import axios from "@/lib/axios";
+import {
+  Todo,
+  CreateTodoInput,
+  UpdateTodoInput,
+  TodoStats,
+  TodoFilter,
+  TodoSort,
+} from "../types/todo.types";
 
 export const todoService = {
   /**
@@ -14,15 +14,15 @@ export const todoService = {
    */
   async getTodos(filter?: TodoFilter, sortBy?: TodoSort): Promise<Todo[]> {
     const params = new URLSearchParams();
-    
-    if (filter && filter !== 'all') {
-      params.append('filter', filter);
+
+    if (filter && filter !== "all") {
+      params.append("filter", filter);
     }
-    
+
     if (sortBy) {
-      params.append('sortBy', sortBy);
+      params.append("sortBy", sortBy);
     }
-    
+
     const response = await axios.get(`/todos?${params.toString()}`);
     return response.data.data;
   },
@@ -39,7 +39,7 @@ export const todoService = {
    * Create new todo
    */
   async createTodo(data: CreateTodoInput): Promise<Todo> {
-    const response = await axios.post('/todos', data);
+    const response = await axios.post("/todos", data);
     return response.data.data;
   },
 
@@ -70,7 +70,7 @@ export const todoService = {
    * Get todo statistics
    */
   async getStats(): Promise<TodoStats> {
-    const response = await axios.get('/todos/stats');
+    const response = await axios.get("/todos/stats");
     return response.data.data;
   },
 };

@@ -13,7 +13,7 @@ import {
   TodoStats, 
   TodoFilter, 
   TodoSort 
-} from '@/types/todo.types';
+} from '../../../types/todo.types';
 
 export default function DashboardPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
