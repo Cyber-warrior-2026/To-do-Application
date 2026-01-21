@@ -1,48 +1,63 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, SortAsc } from 'lucide-react';
-import { toast, Toaster } from 'react-hot-toast';
+import { 
+  Plus, SortAsc, LayoutGrid, CheckCircle2, 
+  Clock, AlertCircle, Shield, LogOut, X, LucideIcon 
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AxiosError } from 'axios'; // 👈 Import this for error handling
+
+// Components
 import TodoList from '@/components/todo/TodoList';
 import TodoModal from '@/components/todo/TodoModal';
-import StatsCard from '@/components/todo/StatsCard';
+import SpotlightBackground from '@/components/ui/SpotlightBackground';
+import { GlassInput, NeonButton } from '@/components/ui/AuthComponents';
+
+// Services & Types
 import { todoService } from '@/services/todo.service';
-import { 
-  Todo, 
-  CreateTodoInput, 
-  TodoStats, 
-  TodoFilter, 
-  TodoSort 
-} from '../../../types/todo.types';
+import { useAuth } from '@/context/AuthContext';
+import { Todo, CreateTodoInput, TodoStats, TodoFilter, TodoSort } from '@/types/todo.types';
+import api from '@/lib/axios';
 
 export default function DashboardPage() {
+  // --- STATE ---
+  const { user, logout } = useAuth();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<TodoFilter>('all');
   const [sortBy, setSortBy] = useState<TodoSort>('createdAt');
   const [isLoading, setIsLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  
+  // Modals
+  const [showTodoModal, setShowTodoModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  
   const [editTodo, setEditTodo] = useState<Todo | null>(null);
   const [stats, setStats] = useState<TodoStats>({
-    total: 0,
-    completed: 0,
-    active: 0,
-    highPriority: 0,
+    total: 0, completed: 0, active: 0, highPriority: 0,
   });
 
-  // Fetch todos when filter or sort changes
+  // Password Form State
+  const [passForm, setPassForm] = useState({ current: '', new: '' });
+  const [passLoading, setPassLoading] = useState(false);
+
+  // --- EFFECTS ---
   useEffect(() => {
     fetchTodos();
     fetchStats();
   }, [filter, sortBy]);
 
+  // --- API ACTIONS ---
   const fetchTodos = async () => {
     try {
       setIsLoading(true);
       const data = await todoService.getTodos(filter, sortBy);
       setTodos(data);
     } catch (error) {
-      toast.error('Failed to fetch todos');
+      // Simple error logging doesn't need strict typing
       console.error(error);
+      toast.error('Could not sync with the matrix.');
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +68,7 @@ export default function DashboardPage() {
       const data = await todoService.getStats();
       setStats(data);
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error('Stats sync failed:', error);
     }
   };
 
@@ -61,128 +76,146 @@ export default function DashboardPage() {
     try {
       if (editTodo) {
         await todoService.updateTodo(editTodo._id, data);
-        toast.success('Task updated successfully! 🎉');
+        toast.success('Task reconfigured successfully.');
       } else {
         await todoService.createTodo(data);
-        toast.success('Task created successfully! ✅');
+        toast.success('New directive established.');
       }
-      setShowModal(false);
+      setShowTodoModal(false);
       setEditTodo(null);
       fetchTodos();
       fetchStats();
     } catch (error) {
-      toast.error('Operation failed 😞');
-      console.error(error);
+      toast.error('Operation failed.');
     }
   };
 
   const handleToggleTodo = async (id: string) => {
     try {
       const updated = await todoService.toggleTodo(id);
-      setTodos(todos.map(todo => 
-        todo._id === id ? updated : todo
-      ));
-      toast.success(updated.completed ? 'Task completed! 🎉' : 'Task reopened 🔄');
+      setTodos(todos.map(t => t._id === id ? updated : t));
+      toast.success(updated.completed ? 'Objective complete.' : 'Objective reopened.');
       fetchStats();
     } catch (error) {
-      toast.error('Failed to update task');
-      console.error(error);
+      toast.error('Update failed.');
     }
   };
 
   const handleDeleteTodo = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
-
+    if (!confirm('Purge this directive?')) return;
     try {
       await todoService.deleteTodo(id);
-      setTodos(todos.filter(todo => todo._id !== id));
-      toast.success('Task deleted 🗑️');
+      setTodos(todos.filter(t => t._id !== id));
+      toast.success('Directive purged.');
       fetchStats();
     } catch (error) {
-      toast.error('Failed to delete task');
-      console.error(error);
+      toast.error('Delete failed.');
     }
   };
 
-  const handleEditTodo = (todo: Todo) => {
-    setEditTodo(todo);
-    setShowModal(true);
+  // --- PASSWORD CHANGE LOGIC (FIXED ERROR HANDLING) ---
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassLoading(true);
+    try {
+      await api.put('/auth/change-password', {
+        currentPassword: passForm.current,
+        newPassword: passForm.new
+      });
+      toast.success('Security protocols updated.');
+      setShowPasswordModal(false);
+      setPassForm({ current: '', new: '' });
+      
+    } catch (err) { // 👈 Error is 'unknown' here
+      // Strictly type the error to access response data safely
+      const error = err as AxiosError<{ message: string }>;
+      const msg = error.response?.data?.message || 'Update failed';
+      toast.error(msg);
+      
+    } finally {
+      setPassLoading(false);
+    }
   };
 
-  const getFilteredTodos = () => {
-    if (filter === 'all') return todos;
-    if (filter === 'active') return todos.filter(t => !t.completed);
-    if (filter === 'completed') return todos.filter(t => t.completed);
-    return todos;
+  // --- ANIMATION VARIANTS ---
+  const containerVars = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
-
-  const filteredTodos = getFilteredTodos();
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Toaster position="top-right" />
+    <SpotlightBackground>
+      <div className="relative z-10 min-h-screen w-full p-4 md:p-8">
+        
+        {/* TOP HEADER */}
+        <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h1 className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-4xl font-black text-transparent">
+              COMMAND CENTER
+            </h1>
+            <p className="text-gray-400">Welcome back, {user?.name || 'User'}</p>
+          </div>
+          
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowPasswordModal(true)}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 backdrop-blur-md transition hover:bg-white/10"
+            >
+              <Shield className="h-4 w-4 text-purple-400" />
+              Security
+            </button>
+            <button 
+              onClick={logout}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-red-500/10 px-4 py-2 text-sm text-red-400 backdrop-blur-md transition hover:bg-red-500/20"
+            >
+              <LogOut className="h-4 w-4" />
+              Disconnect
+            </button>
+          </div>
+        </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            📝 Task Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Manage your tasks efficiently and stay organized
-          </p>
-        </div>
+        {/* STATS GRID */}
+        <motion.div 
+          variants={containerVars}
+          initial="hidden"
+          animate="show"
+          className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {/* 👈 Pass correct typed props here */}
+          <StatCard label="Total Directives" value={stats.total} icon={LayoutGrid} color="text-blue-400" />
+          <StatCard label="Active" value={stats.active} icon={Clock} color="text-yellow-400" />
+          <StatCard label="Completed" value={stats.completed} icon={CheckCircle2} color="text-green-400" />
+          <StatCard label="High Priority" value={stats.highPriority} icon={AlertCircle} color="text-red-400" />
+        </motion.div>
 
-        {/* Stats */}
-        <StatsCard stats={stats} />
-
-        {/* Controls */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Filters */}
-            <div className="flex gap-2">
+        {/* CONTROLS BAR */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl">
+          
+          {/* Filters */}
+          <div className="flex gap-2">
+            {(['all', 'active', 'completed'] as const).map((f) => (
               <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  filter === 'all'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  filter === f 
+                    ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                All ({stats.total})
+                {f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
-              <button
-                onClick={() => setFilter('active')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  filter === 'active'
-                    ? 'bg-orange-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Active ({stats.active})
-              </button>
-              <button
-                onClick={() => setFilter('completed')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  filter === 'completed'
-                    ? 'bg-green-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Completed ({stats.completed})
-              </button>
-            </div>
+            ))}
+          </div>
 
-            {/* Sort */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <SortAsc className="w-4 h-4" />
-                Sort by:
-              </label>
+          <div className="flex items-center gap-4">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <SortAsc className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as TodoSort)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="appearance-none rounded-xl border border-white/10 bg-white/5 py-2 pl-10 pr-8 text-sm text-gray-300 outline-none focus:border-purple-500/50"
               >
                 <option value="createdAt">Date Created</option>
                 <option value="dueDate">Due Date</option>
@@ -190,43 +223,114 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            {/* Add Task Button */}
-            <button
-              onClick={() => {
-                setEditTodo(null);
-                setShowModal(true);
-              }}
-              className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-semibold shadow-lg shadow-blue-500/30"
-            >
-              <Plus className="w-5 h-5" />
-              Add Task
-            </button>
+            {/* Add Button */}
+            <NeonButton onClick={() => { setEditTodo(null); setShowTodoModal(true); }}>
+              <Plus className="h-5 w-5" />
+              NEW TASK
+            </NeonButton>
           </div>
         </div>
 
-        {/* Todo List */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        {/* TODO LIST */}
+        <motion.div 
+          layout 
+          className="rounded-2xl border border-white/10 bg-black/20 p-6 backdrop-blur-sm"
+        >
           <TodoList
-            todos={filteredTodos}
+            todos={todos}
             onToggle={handleToggleTodo}
             onDelete={handleDeleteTodo}
-            onEdit={handleEditTodo}
+            onEdit={(todo) => { setEditTodo(todo); setShowTodoModal(true); }}
             isLoading={isLoading}
             filter={filter}
           />
-        </div>
+        </motion.div>
       </div>
 
-      {/* Modal */}
+      {/* --- MODALS --- */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white">Update Credentials</h3>
+                <button onClick={() => setShowPasswordModal(false)} className="text-gray-500 hover:text-white">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleChangePassword}>
+                <GlassInput 
+                  label="Current Password" type="password" 
+                  value={passForm.current}
+                  onChange={e => setPassForm({...passForm, current: e.target.value})}
+                />
+                <GlassInput 
+                  label="New Password" type="password" 
+                  value={passForm.new}
+                  onChange={e => setPassForm({...passForm, new: e.target.value})}
+                />
+                <div className="mt-6 flex justify-end gap-3">
+                  <button 
+                    type="button" onClick={() => setShowPasswordModal(false)}
+                    className="rounded-lg px-4 py-2 text-sm text-gray-400 hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <NeonButton type="submit" isLoading={passLoading}>
+                    Confirm Update
+                  </NeonButton>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <TodoModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setEditTodo(null);
-        }}
+        isOpen={showTodoModal}
+        onClose={() => { setShowTodoModal(false); setEditTodo(null); }}
         onSubmit={handleCreateTodo}
         editTodo={editTodo}
       />
-    </div>
+      
+    </SpotlightBackground>
+  );
+}
+
+// --- FIX: STRICTLY TYPED STAT CARD ---
+// 1. Define the interface
+interface StatCardProps {
+  label: string;
+  value: number;
+  icon: LucideIcon; // 👈 Strict type for Lucide icons
+  color: string;
+}
+
+// 2. Use the interface in the component
+function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
+  return (
+    <motion.div 
+      variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }}
+      whileHover={{ y: -5 }}
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md"
+    >
+      <div className={`absolute -right-4 -top-4 h-24 w-24 rounded-full ${color} opacity-10 blur-xl`}></div>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-400">{label}</p>
+          <p className="mt-1 text-3xl font-bold text-white">{value}</p>
+        </div>
+        <div className={`rounded-full bg-white/5 p-3 ${color}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+      </div>
+    </motion.div>
   );
 }
