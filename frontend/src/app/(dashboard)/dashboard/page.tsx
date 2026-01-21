@@ -150,7 +150,7 @@ export default function DashboardPage() {
         {/* TOP HEADER */}
         <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-4xl font-black text-transparent">
+            <h1 className="bg-linear-to-r from-purple-400 to-blue-400 bg-clip-text text-4xl font-black text-transparent">
               COMMAND CENTER
             </h1>
             <p className="text-gray-400">Welcome back, {user?.name || 'User'}</p>
