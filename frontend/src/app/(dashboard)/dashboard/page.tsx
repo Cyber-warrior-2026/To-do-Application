@@ -16,7 +16,7 @@ import SpotlightBackground from '@/components/ui/SpotlightBackground';
 import { GlassInput, NeonButton } from '@/components/ui/AuthComponents';
 
 // Services & Types
-import { todoService } from '@/services/todo.service';
+import { todoService } from '@/app/services/todo.service';
 import { useAuth } from '@/context/AuthContext';
 import { Todo, CreateTodoInput, TodoStats, TodoFilter, TodoSort } from '@/types/todo.types';
 import api from '@/lib/axios';
