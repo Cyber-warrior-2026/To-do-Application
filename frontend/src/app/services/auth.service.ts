@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { LoginCredentials, RegisterCredentials, AuthResponse } from '../../../types/auth.types'; // We will make this file
+import { LoginCredentials, RegisterCredentials, AuthResponse } from '../../types/auth.types'; // We will make this file
 
 export const AuthService = {
 
