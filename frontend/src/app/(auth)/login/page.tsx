@@ -45,8 +45,8 @@ export default function LoginPage() {
         className="w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-xl"
       >
         <div className="mb-8 text-center">
-          <h1 className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-4xl font-black text-transparent">
-            NEON TODO
+          <h1 className="bg-linear-to-r from-purple-400 to-blue-400 bg-clip-text text-4xl font-black text-transparent">
+            TODO 
           </h1>
           <p className="mt-2 text-gray-400">Enter the system</p>
         </div>
