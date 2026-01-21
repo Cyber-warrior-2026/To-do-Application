@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreateTodoInput, Todo } from '@/types/todo.types';
+import { CreateTodoInput, Todo } from '../../types/todo.types';
 import { X } from 'lucide-react';
 
 interface TodoModalProps {

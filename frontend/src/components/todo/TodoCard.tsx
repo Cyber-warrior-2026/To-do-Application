@@ -1,6 +1,6 @@
 'use client';
 
-import { Todo } from '@/types/todo.types';
+import { Todo } from '../../types/todo.types';
 import { Check, Trash2, Edit, Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 

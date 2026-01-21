@@ -1,6 +1,6 @@
 'use client';
 
-import { TodoStats } from '@/types/todo.types';
+import { TodoStats } from '../../types/todo.types';
 import { CheckCircle2, Circle, AlertCircle, ListTodo } from 'lucide-react';
 
 interface StatsCardProps {

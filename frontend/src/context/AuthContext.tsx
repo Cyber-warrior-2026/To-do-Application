@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode, JwtPayload } from 'jwt-decode'; // 👈 Import JwtPayload
-import { User } from '../../types/user.types';
+import { User } from '../types/user.types';
 
 // 1. Define what is inside YOUR token
 interface CustomJwtPayload extends JwtPayload {
