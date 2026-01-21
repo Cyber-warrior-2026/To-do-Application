@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AxiosError } from 'axios'; // 👈 Import this for error handling
+import { AxiosError } from 'axios'; 
 
 // Components
 import TodoList from '@/components/todo/TodoList';
@@ -16,20 +16,18 @@ import SpotlightBackground from '@/components/ui/SpotlightBackground';
 import { GlassInput, NeonButton } from '@/components/ui/AuthComponents';
 
 // Services & Types
-import { todoService } from '@/services/todo.service';
+import { todoService } from '../../services/todo.service';
 import { useAuth } from '@/context/AuthContext';
 import { Todo, CreateTodoInput, TodoStats, TodoFilter, TodoSort } from '@/types/todo.types';
 import api from '@/lib/axios';
 
 export default function DashboardPage() {
-  // --- STATE ---
   const { user, logout } = useAuth();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<TodoFilter>('all');
   const [sortBy, setSortBy] = useState<TodoSort>('createdAt');
   const [isLoading, setIsLoading] = useState(true);
   
-  // Modals
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   
@@ -38,24 +36,20 @@ export default function DashboardPage() {
     total: 0, completed: 0, active: 0, highPriority: 0,
   });
 
-  // Password Form State
   const [passForm, setPassForm] = useState({ current: '', new: '' });
   const [passLoading, setPassLoading] = useState(false);
 
-  // --- EFFECTS ---
   useEffect(() => {
     fetchTodos();
     fetchStats();
   }, [filter, sortBy]);
 
-  // --- API ACTIONS ---
   const fetchTodos = async () => {
     try {
       setIsLoading(true);
       const data = await todoService.getTodos(filter, sortBy);
       setTodos(data);
     } catch (error) {
-      // Simple error logging doesn't need strict typing
       console.error(error);
       toast.error('Could not sync with the matrix.');
     } finally {
@@ -113,7 +107,6 @@ export default function DashboardPage() {
     }
   };
 
-  // --- PASSWORD CHANGE LOGIC (FIXED ERROR HANDLING) ---
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPassLoading(true);
@@ -126,18 +119,15 @@ export default function DashboardPage() {
       setShowPasswordModal(false);
       setPassForm({ current: '', new: '' });
       
-    } catch (err) { // 👈 Error is 'unknown' here
-      // Strictly type the error to access response data safely
+    } catch (err) {
       const error = err as AxiosError<{ message: string }>;
       const msg = error.response?.data?.message || 'Update failed';
       toast.error(msg);
-      
     } finally {
       setPassLoading(false);
     }
   };
 
-  // --- ANIMATION VARIANTS ---
   const containerVars = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -181,7 +171,6 @@ export default function DashboardPage() {
           animate="show"
           className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
-          {/* 👈 Pass correct typed props here */}
           <StatCard label="Total Directives" value={stats.total} icon={LayoutGrid} color="text-blue-400" />
           <StatCard label="Active" value={stats.active} icon={Clock} color="text-yellow-400" />
           <StatCard label="Completed" value={stats.completed} icon={CheckCircle2} color="text-green-400" />
@@ -190,8 +179,6 @@ export default function DashboardPage() {
 
         {/* CONTROLS BAR */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl">
-          
-          {/* Filters */}
           <div className="flex gap-2">
             {(['all', 'active', 'completed'] as const).map((f) => (
               <button
@@ -209,7 +196,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Sort Dropdown */}
             <div className="relative">
               <SortAsc className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <select
@@ -223,7 +209,6 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            {/* Add Button */}
             <NeonButton onClick={() => { setEditTodo(null); setShowTodoModal(true); }}>
               <Plus className="h-5 w-5" />
               NEW TASK
@@ -293,27 +278,28 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      <TodoModal
-        isOpen={showTodoModal}
-        onClose={() => { setShowTodoModal(false); setEditTodo(null); }}
-        onSubmit={handleCreateTodo}
-        editTodo={editTodo}
-      />
+      {/* ✅ FIX: TodoModal is now conditionally rendered */}
+      <AnimatePresence>
+        {showTodoModal && (
+          <TodoModal
+            onClose={() => { setShowTodoModal(false); setEditTodo(null); }}
+            onSubmit={handleCreateTodo}
+            editTodo={editTodo}
+          />
+        )}
+      </AnimatePresence>
       
     </SpotlightBackground>
   );
 }
 
-// --- FIX: STRICTLY TYPED STAT CARD ---
-// 1. Define the interface
 interface StatCardProps {
   label: string;
   value: number;
-  icon: LucideIcon; // 👈 Strict type for Lucide icons
+  icon: LucideIcon;
   color: string;
 }
 
-// 2. Use the interface in the component
 function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
   return (
     <motion.div 

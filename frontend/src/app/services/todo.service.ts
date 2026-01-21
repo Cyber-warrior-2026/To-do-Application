@@ -6,7 +6,7 @@ import {
   TodoStats,
   TodoFilter,
   TodoSort,
-} from "../types/todo.types";
+} from "../../types/todo.types";
 
 export const todoService = {
   /**
