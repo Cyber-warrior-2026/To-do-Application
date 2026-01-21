@@ -1,9 +1,5 @@
-import api from "@/lib/axios";
-import {
-  LoginCredentials,
-  RegisterCredentials,
-  AuthResponse,
-} from "../../types/auth.types"; // We will make this file
+import api from '@/lib/axios';
+import { LoginCredentials, RegisterCredentials, AuthResponse } from '../../types/auth.types'; // We will make this file
 
 export const AuthService = {
   async register(data: RegisterCredentials) {
